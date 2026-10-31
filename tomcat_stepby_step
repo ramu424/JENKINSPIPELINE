@@ -1,0 +1,297 @@
+Sure! Let's understand this deployment code line by line, assuming you are completely new to Jenkins and Tomcat.
+
+First, understand what we are trying to achieve.
+
+Our goal: After Jenkins builds your Maven project and generates a WAR file, Jenkins automatically sends that WAR file to the Tomcat server so that Tomcat can run your web application.
+
+1. Complete deployment code
+
+groovy
+deploy adapters: [
+    tomcat9(
+        credentialsId: 'tomcat-creds',
+        url: "${env.TOMCAT_URL}"
+    )
+],
+contextPath: "${env.TOMCAT_PATH}",
+war: 'target/*.war'
+Let's break it down.
+
+2. What is deploy?
+
+groovy
+deploy
+This is a deployment step provided by the Jenkins Deploy to container Plugin.
+
+Its job is to take your generated WAR file and deploy it to your Tomcat server.
+
+Think of it like this:
+
+Jenkins
+
+Builds your Maven project
+
+WAR file
+
+target/*.war
+
+Deploys WAR file
+
+Tomcat Server
+
+Runs your web application
+
+3. What is adapters?
+
+groovy
+deploy adapters: [
+An adapter tells Jenkins which application server you want to deploy your application to.
+
+For example:
+
+Tomcat 9 adapter → Deploy to Tomcat 9.
+
+Other supported adapters → Deploy to their respective application servers.
+
+In your case, you are using Tomcat.
+
+4. What is tomcat9()?
+
+groovy
+tomcat9(
+This tells Jenkins that your target application server is Tomcat 9.
+
+Jenkins uses the Tomcat 9 adapter to communicate with your Tomcat server and deploy the WAR file.
+
+Important: Your Tomcat server must actually be compatible with the Tomcat 9 adapter.
+
+5. What is credentialsId?
+
+groovy
+credentialsId: 'tomcat-creds',
+This tells Jenkins which saved credentials it should use to log in to Tomcat.
+
+For example, imagine your Tomcat Manager has:
+
+Field
+
+Example
+
+Username
+
+deployuser
+
+Password
+
+********
+
+Instead of writing the username and password directly in your Jenkinsfile, you save them in Jenkins Credentials.
+
+You give those credentials an ID:
+
+
+text
+tomcat-creds
+Then Jenkins uses:
+
+
+groovy
+credentialsId: 'tomcat-creds'
+to retrieve those saved credentials.
+
+Where do you configure this?
+
+Jenkins Dashboard → Manage Jenkins → Credentials → System → Global credentials → Add Credentials.
+
+For the Deploy to Container Plugin, use the appropriate username/password credential.
+
+6. What is url?
+
+groovy
+url: "${env.TOMCAT_URL}"
+This specifies the address of your Tomcat server.
+
+In your environment section, you defined:
+
+
+groovy
+TOMCAT_URL = 'http://192.168.31.178:9999'
+Therefore:
+
+
+groovy
+url: "${env.TOMCAT_URL}"
+means:
+
+
+groovy
+url: "http://192.168.31.178:9999"
+Here:
+
+192.168.31.178 = Tomcat server IP address.
+
+9999 = Tomcat server port.
+
+env means Jenkins environment variables.
+
+${env.TOMCAT_URL} retrieves the value stored in your environment variable.
+
+7. What is contextPath?
+
+groovy
+contextPath: "${env.TOMCAT_PATH}",
+This specifies the URL path through which users will access your deployed application.
+
+You defined:
+
+
+groovy
+TOMCAT_PATH = '/maven-web-app'
+So the application will be available at:
+
+
+text
+http://192.168.31.178:9999/maven-web-app
+Let's understand with an example.
+
+Suppose your Tomcat server is running at:
+
+
+text
+http://192.168.31.178:9999
+And your application context path is:
+
+
+text
+/maven-web-app
+The final application URL becomes:
+
+
+text
+http://192.168.31.178:9999/maven-web-app
+In simple words, contextPath defines the application name in the URL.
+
+8. What is war?
+
+groovy
+war: 'target/*.war'
+This tells Jenkins which WAR file needs to be deployed.
+
+Remember your previous build stage:
+
+
+groovy
+stage('BUILD PACKAGE') {
+    steps {
+        sh 'mvn clean package'
+    }
+}
+When Maven executes:
+
+
+bash
+mvn clean package
+it builds your application and generates a WAR file inside the target directory.
+
+For example:
+
+
+text
+maven-web-app/
+    pom.xml
+    src/
+    target/
+        maven-web-app.war
+Now understand:
+
+target/ → Folder where Maven generates the build output.
+
+*.war → Matches a WAR file inside that folder.
+
+war: → Tells Jenkins which WAR file to deploy.
+
+The * is a wildcard. It means any matching WAR filename.
+
+9. Complete deployment flow
+Let's connect everything:
+
+Jenkins runs Maven build
+
+
+bash
+mvn clean package
+Maven generates the WAR file.
+
+Jenkins finds the WAR file
+
+
+groovy
+war: 'target/*.war'
+Jenkins connects to Tomcat
+
+
+groovy
+url: "${env.TOMCAT_URL}"
+Jenkins authenticates with Tomcat
+
+
+groovy
+credentialsId: 'tomcat-creds'
+Jenkins deploys using Tomcat 9 adapter
+
+
+groovy
+tomcat9(...)
+Tomcat makes the application available
+
+
+groovy
+contextPath: "${env.TOMCAT_PATH}"
+10. Final application URL
+Based on your configuration:
+
+Your deployed application
+
+http://192.168.31.178:9999/maven-web-app 
+This URL will work provided that Tomcat is running, the deployment succeeds, and the server is reachable.
+
+11. Important things to remember for interviews
+Keyword
+
+Meaning
+
+deploy
+
+Deploys the application
+
+adapters
+
+Specifies the application server adapter
+
+tomcat9()
+
+Uses the Tomcat 9 adapter
+
+credentialsId
+
+Identifies saved Tomcat login credentials
+
+url
+
+Tomcat server address
+
+contextPath
+
+Application URL path
+
+war
+
+WAR file to deploy
+
+One interview question:
+
+Why do we use credentialsId instead of directly writing the Tomcat username and password in the Jenkinsfile?
+
+Answer: To securely manage credentials in Jenkins and avoid exposing sensitive information in the pipeline code.
+
+My suggestion: First understand the difference between these three things: TOMCAT_URL, TOMCAT_PATH, and war. These are very important concepts when learning Jenkins-to-Tomcat deployment.

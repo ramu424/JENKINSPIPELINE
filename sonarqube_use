@@ -1,0 +1,15 @@
+You should keep the SonarCloud code analysis stage after the Maven build and before the Tomcat deployment stage.
+
+SonarCloud will analyse your source code and identify:
+
+Security vulnerabilities
+
+Bugs
+
+Code smells
+
+Security hotspots
+
+Code quality issues
+
+Your pipeline should follow this order:

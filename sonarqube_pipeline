@@ -1,0 +1,180 @@
+2. Add SonarCloud stage to your Jenkinsfile
+Since you are using Maven, you can use the Maven Sonar Scanner.
+
+Add this stage immediately after PACKAGE BUILD:
+
+
+groovy
+
+stage('SONARCLOUD ANALYSIS') {
+    steps {
+        withSonarQubeEnv('SonarCloud') {
+            sh '''
+                mvn sonar:sonar \
+                -Dsonar.projectKey=YOUR_PROJECT_KEY \
+                -Dsonar.organization=YOUR_ORGANIZATION
+            '''
+        }
+    }
+}
+Replace:
+
+YOUR_PROJECT_KEY with your project's key from SonarCloud.
+
+YOUR_ORGANIZATION with your SonarCloud organization key.
+
+SonarCloud with the exact SonarQube installation name configured in Jenkins.
+
+What does this command do?
+
+
+bash
+mvn sonar:sonar
+It tells Maven to run Sonar analysis and send the analysis results to SonarCloud.
+
+withSonarQubeEnv('SonarCloud') provides the configured SonarCloud connection details and authentication to the scanner.
+
+3. Add Quality Gate stage
+This is an important step.
+
+Suppose SonarCloud finds serious issues or your project fails its configured quality conditions.
+
+You may not want Jenkins to deploy that application to Tomcat.
+
+Add this stage after SonarCloud analysis:
+
+
+groovy
+stage('QUALITY GATE') {
+    steps {
+        timeout(time: 5, unit: 'MINUTES') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
+}
+What happens?
+
+If the Quality Gate passes → Jenkins continues to Tomcat deployment.
+
+If the Quality Gate fails → Jenkins stops the pipeline.
+
+If the result is not received within five minutes → the pipeline times out.
+
+This is the purpose of waitForQualityGate. 
+
+Jenkins
++1
+
+4. Before running this pipeline, configure Jenkins
+You need to do these configurations only once.
+
+A. Install Jenkins plugin
+
+Go to:
+
+Jenkins Dashboard → Manage Jenkins → Plugins → Available plugins.
+
+Install:
+
+- SonarQube Scanner for Jenkins
+
+B. Configure SonarCloud server
+
+Go to:
+
+Jenkins Dashboard → Manage Jenkins → Configure System → SonarQube servers.
+
+Add:
+
+Setting
+
+Value
+
+Name
+
+SonarCloud
+
+Server URL
+
+https://sonarcloud.io
+
+Server authentication token
+
+Your SonarCloud token
+
+Generate your token from SonarCloud under My Account → Security.
+
+Save the token in Jenkins credentials. Never put the token directly in your Jenkinsfile.
+
+C. Configure webhook
+
+For the Quality Gate stage to receive the result, configure a webhook in SonarCloud:
+
+Open your SonarCloud project.
+
+Go to Administration → Webhooks.
+
+Add your Jenkins webhook URL:
+
+
+text
+https://YOUR-JENKINS-URL/sonarqube-webhook/
+Your Jenkins server must be reachable by SonarCloud. 
+
+Sonar Documentation
++2
+
+5. Your final pipeline stages
+Your existing stages will now look like this:
+
+
+groovy
+stages {
+
+    stage('GET CODE') {
+        // GitHub checkout
+    }
+
+    stage('PACKAGE BUILD') {
+        // Maven build
+    }
+
+    stage('SONARCLOUD ANALYSIS') {
+        // Scan source code
+    }
+
+    stage('QUALITY GATE') {
+        // Check SonarCloud result
+    }
+
+    stage('DEPLOY WAR') {
+        // Deploy to Tomcat
+    }
+}
+6. Understand the difference
+SonarCloud Analysis
+
+Quality Gate
+
+Scans your source code
+
+Checks the analysis result
+
+Finds vulnerabilities
+
+Checks configured quality conditions
+
+Finds bugs
+
+Passes or fails
+
+Finds code smells
+
+Controls whether deployment continues
+
+Important: SonarCloud analysis identifies issues, but the Quality Gate decides whether the pipeline should continue based on your configured conditions.
+
+Official reference: Jenkins SonarQube Pipeline documentation .
+
+My suggestion: Let's first configure SonarCloud in Jenkins, then add the analysis stage. The most important things to get right are the SonarCloud token, organization key and project key.
+

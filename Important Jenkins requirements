@@ -1,0 +1,14 @@
+Important Jenkins requirements
+Make sure you have these configured:
+
+JDK: JDK_INSTALLATION in Manage Jenkins → Tools.
+
+Maven: MAVEN_INSTALLATION in Manage Jenkins → Tools.
+
+GitHub credentials: github-creds.
+
+Tomcat credentials: tomcat-creds.
+
+Deploy to container Plugin: Installed in Jenkins.
+
+Tomcat URL: http://192.168.31.178:9999 must be accessible from the Jenkins machine.
