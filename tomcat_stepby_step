@@ -295,3 +295,5 @@ Why do we use credentialsId instead of directly writing the Tomcat username and 
 Answer: To securely manage credentials in Jenkins and avoid exposing sensitive information in the pipeline code.
 
 My suggestion: First understand the difference between these three things: TOMCAT_URL, TOMCAT_PATH, and war. These are very important concepts when learning Jenkins-to-Tomcat deployment.
+
+
